@@ -86,6 +86,12 @@ export function TrendingDiscussions({ className }: { className?: string }) {
                     last_activity_at: lastActivityAt,
                     trend_score: msgCount * 2 + recencyBonus(lastActivityAt),
                 };
+            }).filter((chat) => {
+                // Feature request: only show chats with active users online.
+                // We estimate this by checking if the last activity was within 15 minutes.
+                const inactivityMs = Date.now() - new Date(chat.last_activity_at).getTime();
+                const inactivityMinutes = inactivityMs / (1000 * 60);
+                return inactivityMinutes <= 15;
             });
 
             // Sort by trend_score desc, take top 5
