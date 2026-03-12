@@ -58,20 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     if (updatedProfile) profile = updatedProfile;
                 }
 
-                // If profile is missing, log warning but continue
-                // Profile should be created by database trigger on signup
+                // If profile is missing, log warning but continue with metadata or anonymous defaults
                 if (!profile) {
-                    console.warn("Profile not found for user. This should have been created by the database trigger.");
-                    // Set a minimal profile to allow the app to function
-                    profile = {
-                        nickname: session.user.user_metadata?.nickname || session.user.email?.split('@')[0] || 'Anonymous',
-                        created_at: session.user.created_at,
-                        status: 'Normal',
-                        suspension_count: 0,
-                        last_suspension_at: null,
-                        banned_at: null,
-                        active_flags_count: 0
-                    };
+                    console.warn("Profile not found for user. Using default guest values.");
                 }
 
                 setUser({
@@ -79,11 +68,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     email: session.user.email,
                     nickname: profile?.nickname || session.user.user_metadata?.nickname || 'Anonymous',
                     created_at: profile?.created_at || session.user.created_at,
-                    status: profile?.status || 'Normal',
+                    status: (profile?.status as any) || 'Normal',
                     suspension_count: profile?.suspension_count || 0,
                     last_suspension_at: profile?.last_suspension_at || null,
                     banned_at: profile?.banned_at || null,
                     active_flags_count: profile?.active_flags_count || 0
+                });
+            } else {
+                // Bypassing Auth: Provide a Mock Guest User if no session exists
+                console.log("No auth session found. Using Guest bypass.");
+                const guestId = `guest-${Math.random().toString(36).substr(2, 9)}`;
+                setUser({
+                    id: guestId,
+                    email: undefined,
+                    nickname: `Guest-${guestId.substr(-4)}`,
+                    created_at: new Date().toISOString(),
+                    status: 'Normal',
+                    suspension_count: 0,
+                    last_suspension_at: null,
+                    banned_at: null,
+                    active_flags_count: 0
                 });
             }
             setIsLoading(false);
@@ -107,35 +111,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         if (updatedProfile) profile = updatedProfile;
                     }
 
-                    // If profile is missing, log warning but continue
-                    // Profile should be created by database trigger on signup
-                    if (!profile) {
-                        console.warn("Profile not found for user. This should have been created by the database trigger.");
-                        // Set a minimal profile to allow the app to function
-                        profile = {
-                            nickname: session.user.user_metadata?.nickname || session.user.email?.split('@')[0] || 'Anonymous',
-                            created_at: session.user.created_at,
-                            status: 'Normal',
-                            suspension_count: 0,
-                            last_suspension_at: null,
-                            banned_at: null,
-                            active_flags_count: 0
-                        };
-                    }
-
                     setUser({
                         id: session.user.id,
                         email: session.user.email,
                         nickname: profile?.nickname || session.user.user_metadata?.nickname || 'Anonymous',
                         created_at: profile?.created_at || session.user.created_at,
-                        status: profile?.status || 'Normal',
+                        status: (profile?.status as any) || 'Normal',
                         suspension_count: profile?.suspension_count || 0,
                         last_suspension_at: profile?.last_suspension_at || null,
                         banned_at: profile?.banned_at || null,
                         active_flags_count: profile?.active_flags_count || 0
                     });
                 } else {
-                    setUser(null);
+                    // Stay in Guest mode if sign out happens
+                    const guestId = `guest-${Math.random().toString(36).substr(2, 9)}`;
+                    setUser({
+                        id: guestId,
+                        email: undefined,
+                        nickname: `Guest-${guestId.substr(-4)}`,
+                        created_at: new Date().toISOString(),
+                        status: 'Normal',
+                        suspension_count: 0,
+                        last_suspension_at: null,
+                        banned_at: null,
+                        active_flags_count: 0
+                    });
                 }
                 setIsLoading(false);
             });

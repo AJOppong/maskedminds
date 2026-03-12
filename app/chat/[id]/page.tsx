@@ -115,19 +115,30 @@ export default function ChatPage() {
                 async (payload) => {
                     const newMessage = payload.new as Message;
 
+                    // Skip the message if we sent it ourselves (we already have it optimistically)
+                    if (user && newMessage.sender_id === user.id) return;
+
                     // Fetch sender profile for the new message
-                    const { data: profileData } = await supabase
+                    const { data: profileData, error: profileError } = await supabase
                         .from('profiles')
                         .select('nickname')
                         .eq('id', newMessage.sender_id)
-                        .single();
+                        .maybeSingle();
+
+                    if (profileError) {
+                        console.warn("Profile fetch error in realtime:", profileError);
+                    }
 
                     const messageWithProfile = {
                         ...newMessage,
                         profiles: { nickname: profileData?.nickname || 'Anonymous' }
                     };
 
-                    setMessages((prev) => [...prev, messageWithProfile]);
+                    setMessages((prev) => {
+                        // Extra safety check to prevent any accidental duplicates
+                        if (prev.some(m => m.id === newMessage.id)) return prev;
+                        return [...prev, messageWithProfile];
+                    });
                     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
                 }
             )

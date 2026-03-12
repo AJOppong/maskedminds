@@ -24,7 +24,7 @@ export default function Home() {
           life, career, and relationships without fear of judgment.
         </p>
         <div className="flex justify-center gap-4 pt-4 animate-slide-up">
-          <Link href="/auth/signup">
+          <Link href="/explore">
             <Button size="lg" className="rounded-full px-8">
               Get Started <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

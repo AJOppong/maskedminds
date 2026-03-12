@@ -52,12 +52,22 @@ export default function SignupPage() {
                     console.warn("Profile creation warning:", profileError);
                 }
 
-                // Show success message with email verification instructions
-                alert("Account created! Please check your email to verify your account before signing in. Don't forget to check your spam folder!");
-                router.push("/auth/login");
+                // Log them in immediately since email confirmation is off
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+
+                if (signInError) {
+                    console.error("Auto login failed:", signInError);
+                    router.push("/auth/login");
+                } else {
+                    router.push("/explore");
+                }
             }
         } catch (err: any) {
             console.error("Signup error:", err);
+
             if (err.message && (err.message.includes("User already registered") || err.message.includes("already has been registered"))) {
                 setError("This email address is already in use. Please sign in instead.");
             } else {
