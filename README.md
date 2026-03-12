@@ -14,6 +14,8 @@ pnpm dev
 bun dev
 ```
 
+<a href="https://maskedmindsx.com/" target="_blank" style="padding:8px 12px; background-color:#28a745; color:white; border-radius:5px; text-decoration:none;">View Live Project</a>
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
