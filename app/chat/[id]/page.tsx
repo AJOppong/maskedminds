@@ -158,10 +158,12 @@ export default function ChatPage() {
         const content = newMessage;
         setNewMessage(""); // Optimistic clear
 
+        // Generate a real UUID client-side for the message so we can deduplicate exactly
+        const messageId = crypto.randomUUID();
+        
         // Optimistic UI Update
-        const tempId = `temp-${Date.now()}`;
         const tempMessage: Message = {
-            id: tempId,
+            id: messageId,
             content,
             sender_id: user.id,
             created_at: new Date().toISOString(),
@@ -174,27 +176,23 @@ export default function ChatPage() {
         setMessages((prev) => [...prev, tempMessage]);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('messages')
             .insert([
                 {
+                    id: messageId,
                     content,
                     chat_id: chatId,
                     sender_id: user.id
                 }
-            ])
-            .select()
-            .single();
+            ]);
 
         if (error) {
             console.error("Error sending message:", error);
             // Remove optimistic message on error and restore input
-            setMessages((prev) => prev.filter(msg => msg.id !== tempId));
+            setMessages((prev) => prev.filter(msg => msg.id !== messageId));
             setNewMessage(content);
             alert("Failed to send message: " + error.message);
-        } else if (data) {
-            // Replace temp message with real one (though subscription handles this too, this creates a smoother transition if sub is slow)
-            setMessages((prev) => prev.map(msg => msg.id === tempId ? { ...msg, id: data.id, created_at: data.created_at } : msg));
         }
     };
 
